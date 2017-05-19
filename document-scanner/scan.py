@@ -194,6 +194,8 @@ for index, geometry in enumerate(gamePieceGeometries):
 
     # print'original dimensions:', width, height
 
+    if index == 0:
+        rando = pilImage
     # proportional crop positions for getting the online code
     width, height = pilImage.size
     left = int(width * .10)
@@ -212,10 +214,10 @@ for index, geometry in enumerate(gamePieceGeometries):
     onlineCodeImages.append(onlineCodeImage)
 
     # proportional crop positions for getting the manual game pieces
-    left = int(width * .57)
-    top = int(height * .64)  # .64
-    right = width
-    bottom = int(height * .78)  # .77
+    left = int(width * .59)
+    top = int(height * .68)  # .64
+    right = int(width * 0.99)
+    bottom = int(height * .75)  # .77
     # print'manual code crop positions:', left, top, right, bottom
 
     manualCodeImage = pilImage.crop((left, top, right, bottom))
@@ -247,14 +249,31 @@ for index, img in enumerate(onlineCodeImages):
 combinedOnlineCodesImage.save('8-online-codes-together.png')
 
 # create a new image to place all the manual codes on
-bufferHeight = 0
+bufferHeight = 5
 totalWidth = max(manualWidths)
 maxHeight = sum(manualHeights) + bufferHeight * len(manualHeights)
-combinedManualCodesImage = Image.new('RGB', (totalWidth, maxHeight), (179, 214, 243, 255))
+combinedManualCodesImage = Image.new('RGB', (totalWidth, maxHeight), (178, 197, 217, 255))
 yOffset = 0
 for index, img in enumerate(manualCodeImages):
     combinedManualCodesImage.paste(img, (0, yOffset))
     yOffset += img.size[1] + bufferHeight
+
+#####################################################
+combinedManualCodesImage.show()
+new = Image.new('RGB', (298, 233), (178, 197, 217, 255))
+col1 = combinedManualCodesImage.crop((0, 0, 69, 233))
+col2 = combinedManualCodesImage.crop((107, 0, 176, 233))
+col3 = combinedManualCodesImage.crop((218, 0, 287, 233))
+col4 = combinedManualCodesImage.crop((325, 0, 400, 233))
+new.paste(col1, (0, 0))
+new.paste(col2, (74, 0))
+new.paste(col3, (148, 0))
+new.paste(col4, (223, 0))
+new = new.convert('L')  # convert to grayscale
+grayscaleImageArray = threshold_adaptive(numpy.asarray(new), 251, offset=10)
+new = Image.fromarray(grayscaleImageArray.astype("uint8") * 255)
+combinedManualCodesImage = new
+
 combinedManualCodesImage.show()
 combinedManualCodesImage.save('8-manual-codes-together.png')
 
@@ -268,9 +287,12 @@ vision_client = vision.Client()
 
 # load as png into memory and send to google
 imgByteArr = io.BytesIO()
-combinedManualCodesImage.save(imgByteArr, format='PNG')
+rando.show()
+rando.save(imgByteArr, format='PNG')
 image = vision_client.image(content=imgByteArr.getvalue())
 manualDocument = image.detect_text()
+
+import ipdb; ipdb.set_trace()
 
 # if not len(onlineDocument) or not len(manualDocument):
 #     exit(1)
@@ -361,5 +383,4 @@ correctManualCount = sum(True for code in manualCodes if code in correctManualCo
 print"%s / %s correct manual codes (%s%%)" % (
     correctManualCount, len(correctManualCodes), correctManualCount / len(correctManualCodes) * 100)
 
-
-# import ipdb; ipdb.set_trace()
+import ipdb; ipdb.set_trace()
